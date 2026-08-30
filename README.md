@@ -1,82 +1,99 @@
----
-name: internly
-description: Template — automated YC founder outreach. Finds pre-seed/seed startups, drafts personalized emails, sends via Gmail.
-updated: 2026-08-28
----
-
 # internly
 
-Automated founder outreach tool. Finds YC-backed startups (pre-seed/seed/post-seed), generates personalized one-paragraph emails using a free AI model, and sends them through your Gmail via MCP.
+Automated YC founder outreach. Finds pre-seed/seed startups, writes personalized emails, sends them through your Gmail.
 
-## Quick Start
+**How it works:** Pulls companies from the YC directory, finds founder emails, generates a one-sentence observation about their product using AI, rotates through 5 email templates, and sends via your Gmail account.
 
-### 1. Clone the template
+## What you need
+
+| Thing | Where to get it | Cost |
+|-------|-----------------|------|
+| Python 3.10+ | [python.org](https://python.org) | Free |
+| Zen API key | [opencode.ai/auth](https://opencode.ai/auth) | Free |
+| Gmail OAuth credentials | [Google Cloud Console](https://console.cloud.google.com) | Free |
+| Your name, project URL, pitch | You | Free |
+
+## Quick start
 
 ```bash
-git clone https://github.com/justrishith/internly.git
+# Clone
+git clone https://github.com/YOUR_USERNAME/internly.git
 cd internly
-```
 
-### 2. Run interactive setup
-
-```bash
-python internly.py init
-```
-
-This walks you through setting up:
-- Your name, project URL, GitHub, pitch
-- Zen API key (free, from opencode.ai/auth)
-- Gmail OAuth credentials (see [setup guide](GOOGLE_CLOUD_SETUP.md))
-
-### 3. Test it
-
-```bash
+# Install
 pip install -r requirements.txt
+
+# Set up (walks you through everything)
+python internly.py init
+
+# Test
 python internly.py stats
-```
 
-### 4. Run your first outreach
-
-```bash
+# Run
 python internly.py daily-run --limit 5
 ```
 
 ## Commands
 
-| Command | What it does |
-|---------|--------------|
-| `init` | Interactive setup — creates .env file |
-| `daily-run` | Full pipeline: fetch → find → draft → send |
-| `draft` | Draft emails without sending |
-| `send` | Send already-drafted emails |
-| `stats` | View sending statistics |
-| `list` | List founders in database |
+```
+python internly.py init              # Interactive setup
+python internly.py daily-run         # Full pipeline: fetch -> find -> draft -> send
+python internly.py daily-run --limit 10   # Send max 10 emails
+python internly.py draft             # Draft emails without sending
+python internly.py send              # Send drafted emails
+python internly.py stats             # View sending stats
+python internly.py list              # List founders in database
+```
 
-## How it works
+## Configuration
 
-1. **Fetches YC companies** from the free yc-oss/api (6000+ companies)
-2. **Finds founder emails** via web scraping
-3. **Generates observations** by scraping their homepage and calling a free AI model
-4. **Rotates 3 templates** — each is one personalized paragraph
-5. **Sends via Gmail API** — through your Google account, no third-party service
-6. **Logs everything** to SQLite
+All settings live in `.env` (created by `init`). Here's what each one does:
 
-## The 3 Templates
+| Setting | What it does | Example |
+|---------|--------------|---------|
+| `YOUR_NAME` | Your name in emails | `Rishith` |
+| `YOUR_LINK` | Your main project URL | `https://linkup.vercel.app` |
+| `YOUR_GITHUB` | Your GitHub profile | `https://github.com/justrishith` |
+| `YOUR_PITCH` | 1-2 sentence elevator pitch | `I build real products, not tutorials.` |
+| `ZEN_API_KEY` | API key for AI observations | `sk-...` |
+| `GOOGLE_GMAIL_CLIENT_ID` | OAuth client ID | `778756...` |
+| `GOOGLE_GMAIL_CLIENT_SECRET` | OAuth client secret | `GOCSPX-...` |
+| `GOOGLE_REFRESH_TOKEN` | OAuth refresh token | `1//04w...` |
+| `DAILY_LIMIT` | Max emails per day | `25` |
+| `YC_BATCHES` | Which YC batches to target | `Summer 2024,Winter 2025` |
+| `YC_STAGES` | Which stages to target | `Early,Growth` |
 
-Templates rotate A → B → C. Each uses your info from `.env`:
+## Email templates
 
-- **Template A**: "I built something similar" angle
-- **Template B**: "Congrats on the batch" angle
-- **Template C**: "I already looked at your product" angle
+There are 5 templates that rotate automatically. Each one is short, direct, and uses your info from `.env`:
 
-Edit `templates.py` to customize the wording.
+- **A** — "I built something similar"
+- **B** — "Congrats on the batch"
+- **C** — "I looked at your product"
+- **D** — "Short and direct"
+- **E** — "Specific contribution"
 
-## Automation (GitHub Actions)
+The AI generates a one-sentence observation about each company's product, which gets inserted into the templates so each email feels personal.
 
-The tool runs daily at 8 AM UTC via GitHub Actions.
+Edit `templates.py` to change the wording. See `STYLE_GUIDE.md` for writing tips.
 
-1. Fork or clone this repo
-2. Add these secrets in Settings → Secrets → Actions:
+## Google Cloud setup
+
+1. Create a project at [console.cloud.google.com](https://console.cloud.google.com)
+2. Enable **Gmail API** and **Gmail MCP API**
+3. Set up OAuth consent screen (External, add your email as test user)
+4. Add scopes: `gmail.readonly`, `gmail.compose`
+5. Create OAuth credentials (Web application)
+6. Add `https://developers.google.com/oauthplayroom` as redirect URI
+7. Get refresh token at [OAuth Playground](https://developers.google.com/oauthplayground)
+8. Set environment variables or use `init`
+
+Full walkthrough: [GOOGLE_CLOUD_SETUP.md](GOOGLE_CLOUD_SETUP.md)
+
+## Automate with GitHub Actions
+
+1. Fork this repo
+2. Add these secrets in Settings -> Secrets -> Actions:
    - `ZEN_API_KEY`
    - `GOOGLE_GMAIL_CLIENT_ID`
    - `GOOGLE_GMAIL_CLIENT_SECRET`
@@ -85,49 +102,51 @@ The tool runs daily at 8 AM UTC via GitHub Actions.
    - `YOUR_LINK`
    - `YOUR_GITHUB`
    - `YOUR_PITCH`
-3. The workflow runs automatically
+3. The workflow runs daily at 8 AM UTC
 
-## Config
+## How the pipeline works
 
-All settings are in `.env` (created by `init`). See `.env.example` for all options:
-
-| Setting | What it controls |
-|---------|-----------------|
-| `YOUR_NAME` | Your name in emails |
-| `YOUR_LINK` | Your main project URL |
-| `YOUR_GITHUB` | Your GitHub profile |
-| `YOUR_PITCH` | 1-2 sentence elevator pitch |
-| `ZEN_API_KEY` | For AI-generated observations |
-| `DAILY_LIMIT` | Max emails per day (default: 25) |
-| `YC_BATCHES` | Which YC batches to target |
-| `YC_STAGES` | Which stages (Early, Growth) |
-
-## Database
-
-All data is in `internly.db` (SQLite). Inspect directly:
-
-```bash
-sqlite3 internly.db
-.tables
-SELECT * FROM founders;
-SELECT * FROM emails;
+```
+1. Fetch YC companies     yc-oss/api (free, no auth)
+       |
+2. Find founder emails    Web scraping + email patterns
+       |
+3. Generate observations  Scrape homepage -> AI writes 1 sentence
+       |
+4. Pick template          Rotates A -> B -> C -> D -> E
+       |
+5. Send via Gmail         OAuth refresh token -> Gmail API
+       |
+6. Log to SQLite          Track everything locally
 ```
 
-## Files
+## Project structure
 
-| File | Purpose |
-|------|---------|
-| `internly.py` | Main CLI entry point |
-| `yc_fetcher.py` | Fetches YC companies from free API |
-| `email_finder.py` | Finds founder emails via scraping |
-| `templates.py` | 3 one-paragraph email templates |
-| `observer.py` | Scrapes homepage + generates observation |
-| `sender.py` | Gmail API sender via OAuth |
-| `tracker.py` | SQLite database operations |
-| `config.py` | Configuration from environment |
-| `GOOGLE_CLOUD_SETUP.md` | Step-by-step Google Cloud tutorial |
-| `.github/workflows/daily-outreach.yml` | GitHub Actions schedule |
+```
+internly/
+  internly.py        # CLI entry point
+  config.py          # Reads .env
+  templates.py       # 5 email templates (edit these)
+  yc_fetcher.py      # Pulls YC companies
+  email_finder.py    # Finds founder emails
+  observer.py        # Generates product observations
+  sender.py          # Gmail API sender
+  tracker.py         # SQLite database
+  .env.example       # Config template
+  .github/workflows/
+    daily-outreach.yml   # GitHub Actions schedule
+```
+
+## Troubleshooting
+
+| Problem | Fix |
+|---------|-----|
+| "No founders found" | Check YC batches/stages in .env |
+| "Gmail API error 400" | Re-do OAuth Playground step |
+| "Token expired" | Re-run OAuth Playground, update refresh token |
+| "Rate limit" on observations | Normal, falls back to default text |
+| Emails feel generic | Edit templates.py, add more specific pitch |
 
 ## License
 
-MIT — use it, fork it, modify it.
+MIT

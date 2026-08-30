@@ -34,12 +34,6 @@ def send_email(to: str, subject: str, body: str, config) -> bool:
         print("No GOOGLE_REFRESH_TOKEN set. Cannot send.")
         return False
 
-    # Add unsubscribe footer
-    full_body = f"""{body}
-
----
-If you'd prefer not to hear from me, just reply with "unsubscribe" and I'll remove you immediately."""
-
     try:
         # Get fresh access token
         access_token = get_access_token(
@@ -49,7 +43,7 @@ If you'd prefer not to hear from me, just reply with "unsubscribe" and I'll remo
         )
 
         # Build email
-        msg = MIMEText(full_body)
+        msg = MIMEText(body)
         msg["to"] = to
         msg["from"] = "me"  # Gmail replaces with authenticated email
         msg["subject"] = subject
