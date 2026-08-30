@@ -1,8 +1,6 @@
 # internly
 
-Automated YC founder outreach. Finds pre-seed/seed startups, writes personalized emails, sends them through your Gmail.
-
-**How it works:** Pulls companies from the YC directory, finds founder emails, generates a one-sentence observation about their product using AI, rotates through 5 email templates, and sends via your Gmail account.
+> Automated YC founder outreach — finds startups, writes emails, sends them.
 
 ## What you need
 
